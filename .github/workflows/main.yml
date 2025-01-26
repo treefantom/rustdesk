@@ -3,18 +3,20 @@ name: Build RustDesk
 on:
   push:
     branches:
-      - master  # Замените на вашу ветку, если она называется иначе
+      - master  # Замените на вашу ветку
   pull_request:
     branches:
-      - master  # Замените на вашу ветку, если она называется иначе
+      - master  # Замените на вашу ветку
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Используем конкретную версию Ubuntu
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          submodules: recursive  # Инициализируем подмодули
 
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
@@ -37,6 +39,9 @@ jobs:
           key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y libssl-dev pkg-config
 
       - name: Build the project
         run: cargo build --release
