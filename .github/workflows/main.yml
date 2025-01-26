@@ -3,27 +3,48 @@ name: Build RustDesk
 on:
   push:
     branches:
-      - master  # Замените на вашу ветку
+      - master  # Замените на вашу ветку, если она называется иначе
   pull_request:
     branches:
-      - master  # Замените на вашу ветку
+      - master  # Замените на вашу ветку, если она называется иначе
 
 jobs:
   build:
     runs-on: ubuntu-22.04  # Используем конкретную версию Ubuntu
 
     steps:
+      # Шаг 1: Клонирование репозитория с подмодулями
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: recursive  # Инициализируем подмодули
 
+      # Шаг 2: Установка системных зависимостей
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-ugly \
+            gstreamer1.0-libav \
+            libssl-dev \
+            libx11-dev \
+            libwayland-dev \
+            libdbus-1-dev \
+            libpulse-dev \
+            pkg-config
+
+      # Шаг 3: Настройка Rust
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
 
+      # Шаг 4: Кэширование зависимостей Cargo
       - name: Cache Cargo registry
         uses: actions/cache@v3
         with:
@@ -32,6 +53,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
 
+      # Шаг 5: Кэширование результатов сборки
       - name: Cache Cargo build
         uses: actions/cache@v3
         with:
@@ -40,12 +62,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-
 
-      - name: Install system dependencies
-        run: sudo apt-get install -y libssl-dev pkg-config
-
+      # Шаг 6: Сборка проекта
       - name: Build the project
         run: cargo build --release
 
+      # Шаг 7: Загрузка артефактов (скомпилированных файлов)
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
